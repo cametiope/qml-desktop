@@ -3,6 +3,7 @@
 
 #include <QDBusInterface>
 #include <QMap>
+#include <QDebug>
 #include <QVariantMap>
 #include <QDBusArgument>
 
@@ -10,16 +11,16 @@ class Mpris2Player : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataNotify)
+    Q_PROPERTY(QString name MEMBER name)
 
 public:
 
     explicit Mpris2Player(QString serviceName, QObject *parent = 0) : QObject(parent),
         iface(serviceName,
                          "/org/mpris/MediaPlayer2",
-                         "org.mpris.MediaPlayer2.Player") {
+                         "org.mpris.MediaPlayer2.Player"), playerInterface(serviceName, "/org/mpris/MediaPlayer2", "org.mpris.MediaPlayer2"), name(playerInterface.property("Identity").toString()) {
         QDBusConnection::sessionBus().connect(serviceName, "/org/mpris/MediaPlayer2", "org.freedesktop.DBus.Properties", "PropertiesChanged", this, SLOT(metadataReceived(QDBusMessage)));
     }
-    ~Mpris2Player(){}
 
     QVariantMap metadata() const {
         QDBusInterface iface(this->iface.service(), "/org/mpris/MediaPlayer2", "org.freedesktop.DBus.Properties");
@@ -34,9 +35,9 @@ public:
             arg >> str >> var;
             arg.endMapEntry();
             map.insert(str, var);
-        }
-        arg.endMap();
-        return map;
+          }
+         arg.endMap();
+         return map;
     }
 
     Q_INVOKABLE void playPause() {
@@ -62,7 +63,18 @@ public:
         iface.call("OpenUri", uri.toString());
     }
 
+    Q_INVOKABLE void raise() {
+        playerInterface.call("Raise");
+    }
+
+    Q_INVOKABLE void quit() {
+        playerInterface.call("Quit");
+    }
+
+
     QDBusInterface iface;
+    QDBusInterface playerInterface;
+    QString name;
 signals:
     QVariantMap metadataNotify(QVariantMap map);
 private slots:

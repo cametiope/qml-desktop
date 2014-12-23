@@ -26,7 +26,6 @@ void MprisConnection::serviceOwnerChanged(const QString &serviceName, const QStr
     } else if (newOwner.isEmpty() && serviceName.startsWith("org.mpris.MediaPlayer2.")) {
         for (int i = 0; i < playerList.size(); ++i) {
             if (playerList.at(i)->iface.service() == serviceName) {
-                delete playerList.at(i);
                 playerList.removeAt(i);
                 emit playerListChanged(QQmlListProperty<Mpris2Player>(this, playerList));
             }
